@@ -30,10 +30,10 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	pb "google.golang.org/grpc/examples/route_guide/routeguide"
-	"google.golang.org/grpc/testdata"
+	"github.com/chalvern/grpc-go"
+	"github.com/chalvern/grpc-go/credentials"
+	pb "github.com/chalvern/grpc-go/examples/route_guide/routeguide"
+	"github.com/chalvern/grpc-go/testdata"
 )
 
 var (

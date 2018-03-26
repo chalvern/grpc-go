@@ -28,15 +28,15 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/net/http2"
 
-	"google.golang.org/grpc/connectivity"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/keepalive"
-	"google.golang.org/grpc/naming"
-	"google.golang.org/grpc/resolver"
-	"google.golang.org/grpc/resolver/manual"
-	_ "google.golang.org/grpc/resolver/passthrough"
-	"google.golang.org/grpc/test/leakcheck"
-	"google.golang.org/grpc/testdata"
+	"github.com/chalvern/grpc-go/connectivity"
+	"github.com/chalvern/grpc-go/credentials"
+	"github.com/chalvern/grpc-go/keepalive"
+	"github.com/chalvern/grpc-go/naming"
+	"github.com/chalvern/grpc-go/resolver"
+	"github.com/chalvern/grpc-go/resolver/manual"
+	_ "github.com/chalvern/grpc-go/resolver/passthrough"
+	"github.com/chalvern/grpc-go/test/leakcheck"
+	"github.com/chalvern/grpc-go/testdata"
 )
 
 var (

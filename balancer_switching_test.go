@@ -25,11 +25,11 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
-	"google.golang.org/grpc/balancer/roundrobin"
-	_ "google.golang.org/grpc/grpclog/glogger"
-	"google.golang.org/grpc/resolver"
-	"google.golang.org/grpc/resolver/manual"
-	"google.golang.org/grpc/test/leakcheck"
+	"github.com/chalvern/grpc-go/balancer/roundrobin"
+	_ "github.com/chalvern/grpc-go/grpclog/glogger"
+	"github.com/chalvern/grpc-go/resolver"
+	"github.com/chalvern/grpc-go/resolver/manual"
+	"github.com/chalvern/grpc-go/test/leakcheck"
 )
 
 func checkPickFirst(cc *ClientConn, servers []*server) error {

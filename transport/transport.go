@@ -19,7 +19,7 @@
 // Package transport defines and implements message oriented communication
 // channel to complete various transactions (e.g., an RPC).  It is meant for
 // grpc-internal usage and is not intended to be imported directly by users.
-package transport // import "google.golang.org/grpc/transport"
+package transport // import "github.com/chalvern/grpc-go/transport"
 
 import (
 	"fmt"
@@ -29,13 +29,13 @@ import (
 
 	"golang.org/x/net/context"
 	"golang.org/x/net/http2"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/keepalive"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/stats"
-	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/tap"
+	"github.com/chalvern/grpc-go/codes"
+	"github.com/chalvern/grpc-go/credentials"
+	"github.com/chalvern/grpc-go/keepalive"
+	"github.com/chalvern/grpc-go/metadata"
+	"github.com/chalvern/grpc-go/stats"
+	"github.com/chalvern/grpc-go/status"
+	"github.com/chalvern/grpc-go/tap"
 )
 
 // recvMsg represents the received msg from the transport. All transport

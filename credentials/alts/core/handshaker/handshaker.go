@@ -27,13 +27,13 @@ import (
 	"sync"
 
 	"golang.org/x/net/context"
-	grpc "google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/alts/core"
-	"google.golang.org/grpc/credentials/alts/core/authinfo"
-	"google.golang.org/grpc/credentials/alts/core/conn"
-	altspb "google.golang.org/grpc/credentials/alts/core/proto/grpc_gcp"
+	grpc "github.com/chalvern/grpc-go"
+	"github.com/chalvern/grpc-go/codes"
+	"github.com/chalvern/grpc-go/credentials"
+	"github.com/chalvern/grpc-go/credentials/alts/core"
+	"github.com/chalvern/grpc-go/credentials/alts/core/authinfo"
+	"github.com/chalvern/grpc-go/credentials/alts/core/conn"
+	altspb "github.com/chalvern/grpc-go/credentials/alts/core/proto/grpc_gcp"
 )
 
 const (

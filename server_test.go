@@ -26,8 +26,8 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
-	"google.golang.org/grpc/test/leakcheck"
-	"google.golang.org/grpc/transport"
+	"github.com/chalvern/grpc-go/test/leakcheck"
+	"github.com/chalvern/grpc-go/transport"
 )
 
 type emptyServiceServer interface{}

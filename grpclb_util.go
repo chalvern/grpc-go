@@ -19,8 +19,8 @@
 package grpc
 
 import (
-	"google.golang.org/grpc/balancer"
-	"google.golang.org/grpc/resolver"
+	"github.com/chalvern/grpc-go/balancer"
+	"github.com/chalvern/grpc-go/resolver"
 )
 
 // The parent ClientConn should re-resolve when grpclb loses connection to the

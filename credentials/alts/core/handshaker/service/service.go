@@ -24,7 +24,7 @@ import (
 	"flag"
 	"sync"
 
-	grpc "google.golang.org/grpc"
+	grpc "github.com/chalvern/grpc-go"
 )
 
 var (

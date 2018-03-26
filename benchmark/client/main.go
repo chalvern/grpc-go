@@ -28,11 +28,11 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/benchmark"
-	testpb "google.golang.org/grpc/benchmark/grpc_testing"
-	"google.golang.org/grpc/benchmark/stats"
-	"google.golang.org/grpc/grpclog"
+	"github.com/chalvern/grpc-go"
+	"github.com/chalvern/grpc-go/benchmark"
+	testpb "github.com/chalvern/grpc-go/benchmark/grpc_testing"
+	"github.com/chalvern/grpc-go/benchmark/stats"
+	"github.com/chalvern/grpc-go/grpclog"
 )
 
 var (

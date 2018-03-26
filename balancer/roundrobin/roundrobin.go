@@ -25,10 +25,10 @@ import (
 	"sync"
 
 	"golang.org/x/net/context"
-	"google.golang.org/grpc/balancer"
-	"google.golang.org/grpc/balancer/base"
-	"google.golang.org/grpc/grpclog"
-	"google.golang.org/grpc/resolver"
+	"github.com/chalvern/grpc-go/balancer"
+	"github.com/chalvern/grpc-go/balancer/base"
+	"github.com/chalvern/grpc-go/grpclog"
+	"github.com/chalvern/grpc-go/resolver"
 )
 
 // Name is the name of round_robin balancer.

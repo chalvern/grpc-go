@@ -25,11 +25,11 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
-	"google.golang.org/grpc/balancer"
-	"google.golang.org/grpc/connectivity"
-	_ "google.golang.org/grpc/grpclog/glogger"
-	"google.golang.org/grpc/test/leakcheck"
-	"google.golang.org/grpc/transport"
+	"github.com/chalvern/grpc-go/balancer"
+	"github.com/chalvern/grpc-go/connectivity"
+	_ "github.com/chalvern/grpc-go/grpclog/glogger"
+	"github.com/chalvern/grpc-go/test/leakcheck"
+	"github.com/chalvern/grpc-go/transport"
 )
 
 const goroutineCount = 5

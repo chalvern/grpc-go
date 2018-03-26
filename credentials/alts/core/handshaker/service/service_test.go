@@ -21,7 +21,7 @@ package service
 import (
 	"testing"
 
-	grpc "google.golang.org/grpc"
+	grpc "github.com/chalvern/grpc-go"
 )
 
 func TestDial(t *testing.T) {

@@ -30,19 +30,19 @@ import (
 
 	"golang.org/x/net/context"
 	"golang.org/x/net/trace"
-	"google.golang.org/grpc/balancer"
-	_ "google.golang.org/grpc/balancer/roundrobin" // To register roundrobin.
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/connectivity"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/grpclog"
-	"google.golang.org/grpc/keepalive"
-	"google.golang.org/grpc/resolver"
-	_ "google.golang.org/grpc/resolver/dns"         // To register dns resolver.
-	_ "google.golang.org/grpc/resolver/passthrough" // To register passthrough resolver.
-	"google.golang.org/grpc/stats"
-	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/transport"
+	"github.com/chalvern/grpc-go/balancer"
+	_ "github.com/chalvern/grpc-go/balancer/roundrobin" // To register roundrobin.
+	"github.com/chalvern/grpc-go/codes"
+	"github.com/chalvern/grpc-go/connectivity"
+	"github.com/chalvern/grpc-go/credentials"
+	"github.com/chalvern/grpc-go/grpclog"
+	"github.com/chalvern/grpc-go/keepalive"
+	"github.com/chalvern/grpc-go/resolver"
+	_ "github.com/chalvern/grpc-go/resolver/dns"         // To register dns resolver.
+	_ "github.com/chalvern/grpc-go/resolver/passthrough" // To register passthrough resolver.
+	"github.com/chalvern/grpc-go/stats"
+	"github.com/chalvern/grpc-go/status"
+	"github.com/chalvern/grpc-go/transport"
 )
 
 const (

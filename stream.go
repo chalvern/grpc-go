@@ -26,13 +26,13 @@ import (
 
 	"golang.org/x/net/context"
 	"golang.org/x/net/trace"
-	"google.golang.org/grpc/balancer"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/encoding"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/stats"
-	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/transport"
+	"github.com/chalvern/grpc-go/balancer"
+	"github.com/chalvern/grpc-go/codes"
+	"github.com/chalvern/grpc-go/encoding"
+	"github.com/chalvern/grpc-go/metadata"
+	"github.com/chalvern/grpc-go/stats"
+	"github.com/chalvern/grpc-go/status"
+	"github.com/chalvern/grpc-go/transport"
 )
 
 // StreamHandler defines the handler called by gRPC server to complete the

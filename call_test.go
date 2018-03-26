@@ -30,10 +30,10 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/test/leakcheck"
-	"google.golang.org/grpc/transport"
+	"github.com/chalvern/grpc-go/codes"
+	"github.com/chalvern/grpc-go/status"
+	"github.com/chalvern/grpc-go/test/leakcheck"
+	"github.com/chalvern/grpc-go/transport"
 )
 
 var (

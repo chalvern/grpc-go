@@ -25,7 +25,7 @@ import (
 	"net"
 	"net/http"
 
-	"google.golang.org/grpc/codes"
+	"github.com/chalvern/grpc-go/codes"
 
 	netctx "golang.org/x/net/context"
 )

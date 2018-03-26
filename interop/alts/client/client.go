@@ -24,10 +24,10 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
-	grpc "google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/alts"
-	"google.golang.org/grpc/grpclog"
-	testpb "google.golang.org/grpc/interop/grpc_testing"
+	grpc "github.com/chalvern/grpc-go"
+	"github.com/chalvern/grpc-go/credentials/alts"
+	"github.com/chalvern/grpc-go/grpclog"
+	testpb "github.com/chalvern/grpc-go/interop/grpc_testing"
 )
 
 const (

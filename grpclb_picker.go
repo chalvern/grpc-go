@@ -23,10 +23,10 @@ import (
 	"sync/atomic"
 
 	"golang.org/x/net/context"
-	"google.golang.org/grpc/balancer"
-	"google.golang.org/grpc/codes"
-	lbpb "google.golang.org/grpc/grpclb/grpc_lb_v1/messages"
-	"google.golang.org/grpc/status"
+	"github.com/chalvern/grpc-go/balancer"
+	"github.com/chalvern/grpc-go/codes"
+	lbpb "github.com/chalvern/grpc-go/grpclb/grpc_lb_v1/messages"
+	"github.com/chalvern/grpc-go/status"
 )
 
 type rpcStats struct {

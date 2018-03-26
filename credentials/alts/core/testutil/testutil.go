@@ -26,7 +26,7 @@ import (
 	"net"
 	"sync"
 
-	"google.golang.org/grpc/credentials/alts/core/conn"
+	"github.com/chalvern/grpc-go/credentials/alts/core/conn"
 )
 
 // Stats is used to collect statistics about concurrent handshake calls.

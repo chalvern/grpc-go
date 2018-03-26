@@ -21,7 +21,7 @@ package grpc
 import (
 	"testing"
 
-	"google.golang.org/grpc/resolver"
+	"github.com/chalvern/grpc-go/resolver"
 )
 
 func TestParseTarget(t *testing.T) {

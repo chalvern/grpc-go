@@ -24,10 +24,10 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
-	grpc "google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/alts/core"
-	altspb "google.golang.org/grpc/credentials/alts/core/proto/grpc_gcp"
-	"google.golang.org/grpc/credentials/alts/core/testutil"
+	grpc "github.com/chalvern/grpc-go"
+	"github.com/chalvern/grpc-go/credentials/alts/core"
+	altspb "github.com/chalvern/grpc-go/credentials/alts/core/proto/grpc_gcp"
+	"github.com/chalvern/grpc-go/credentials/alts/core/testutil"
 )
 
 var (

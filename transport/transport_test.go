@@ -38,9 +38,9 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/hpack"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/keepalive"
-	"google.golang.org/grpc/status"
+	"github.com/chalvern/grpc-go/codes"
+	"github.com/chalvern/grpc-go/keepalive"
+	"github.com/chalvern/grpc-go/status"
 )
 
 type server struct {

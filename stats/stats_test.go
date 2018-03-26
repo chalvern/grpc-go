@@ -31,11 +31,11 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/stats"
-	testpb "google.golang.org/grpc/stats/grpc_testing"
-	"google.golang.org/grpc/status"
+	"github.com/chalvern/grpc-go"
+	"github.com/chalvern/grpc-go/metadata"
+	"github.com/chalvern/grpc-go/stats"
+	testpb "github.com/chalvern/grpc-go/stats/grpc_testing"
+	"github.com/chalvern/grpc-go/status"
 )
 
 func init() {
