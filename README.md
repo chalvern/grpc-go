@@ -1,3 +1,11 @@
+# 说明
+
+这个库是用来学习grpc的库，主要做了两点改动：
+
+* 替换了所有的import，由原来的 google.golang.org/grpc 替换为 github.com/chalvern/grpc-go ，解决依赖路径问题，因此下载本项目后其中的example等可以直接运行。
+
+* 添加一些中文的注释，方便大家参考。
+
 # gRPC-Go
 
 [![Build Status](https://travis-ci.org/grpc/grpc-go.svg)](https://travis-ci.org/grpc/grpc-go) [![GoDoc](https://godoc.org/github.com/chalvern/grpc-go?status.svg)](https://godoc.org/github.com/chalvern/grpc-go) [![GoReportCard](https://goreportcard.com/badge/grpc/grpc-go)](https://goreportcard.com/report/github.com/grpc/grpc-go)
