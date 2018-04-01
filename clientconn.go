@@ -28,8 +28,6 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/net/context"
-	"golang.org/x/net/trace"
 	"github.com/chalvern/grpc-go/balancer"
 	_ "github.com/chalvern/grpc-go/balancer/roundrobin" // To register roundrobin.
 	"github.com/chalvern/grpc-go/codes"
@@ -43,6 +41,8 @@ import (
 	"github.com/chalvern/grpc-go/stats"
 	"github.com/chalvern/grpc-go/status"
 	"github.com/chalvern/grpc-go/transport"
+	"golang.org/x/net/context"
+	"golang.org/x/net/trace"
 )
 
 const (
@@ -91,6 +91,9 @@ var (
 
 // dialOptions configure a Dial call. dialOptions are set by the DialOption
 // values passed to Dial.
+//
+// dialOptions 配置一个Dial调用。 dialOptions根据被传入到Dial的DialOption值进行设置。
+//
 type dialOptions struct {
 	unaryInt    UnaryClientInterceptor
 	streamInt   StreamClientInterceptor
@@ -101,7 +104,7 @@ type dialOptions struct {
 	insecure    bool
 	timeout     time.Duration
 	scChan      <-chan ServiceConfig
-	copts       transport.ConnectOptions
+	copts       transport.ConnectOptions // 连接的配置选项
 	callOptions []CallOption
 	// This is used by v1 balancer dial option WithBalancer to support v1
 	// balancer, and also by WithBalancerName dial option.
@@ -397,6 +400,7 @@ func WithAuthority(a string) DialOption {
 }
 
 // Dial creates a client connection to the given target.
+// Dial 创建一个到给定目标的客户端连接，其实调用了 DialContext 函数
 func Dial(target string, opts ...DialOption) (*ClientConn, error) {
 	return DialContext(context.Background(), target, opts...)
 }
@@ -409,6 +413,9 @@ func Dial(target string, opts ...DialOption) (*ClientConn, error) {
 // The target name syntax is defined in
 // https://github.com/grpc/grpc/blob/master/doc/naming.md.
 // e.g. to use dns resolver, a "dns:///" prefix should be applied to the target.
+//
+// DialContext 创建一个到给定目标的客户端连接。
+//
 func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *ClientConn, err error) {
 	cc := &ClientConn{
 		target: target,
@@ -556,6 +563,8 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 
 // connectivityStateManager keeps the connectivity.State of ClientConn.
 // This struct will eventually be exported so the balancers can access it.
+// connectivityStateManager 负责维护ClientConn的状态
+// 这个结构体最后会是exported的，这样的话balancers才可以访问它
 type connectivityStateManager struct {
 	mu         sync.Mutex
 	state      connectivity.State
@@ -600,9 +609,9 @@ func (csm *connectivityStateManager) getNotifyChan() <-chan struct{} {
 // ClientConn represents a client connection to an RPC server.
 type ClientConn struct {
 	ctx    context.Context
-	cancel context.CancelFunc
+	cancel context.CancelFunc //取消函数，只是一个函数
 
-	target       string
+	target       string //保存target的地址，比如 “localhost:50051”
 	parsedTarget resolver.Target
 	authority    string
 	dopts        dialOptions
@@ -964,6 +973,7 @@ func (cc *ClientConn) Close() error {
 }
 
 // addrConn is a network connection to a given address.
+// addrConn 是一个到给定地址的网络连接
 type addrConn struct {
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -974,12 +984,16 @@ type addrConn struct {
 	events trace.EventLog
 	acbw   balancer.SubConn
 
-	mu           sync.Mutex
-	curAddr      resolver.Address
-	reconnectIdx int // The index in addrs list to start reconnecting from.
+	mu sync.Mutex
+	// 解析器的地址
+	curAddr resolver.Address
+	// The index in addrs list to start reconnecting from.
+	// 尝试重新连接的地址在地址列表中的索引
+	reconnectIdx int
 	state        connectivity.State
 	// ready is closed and becomes nil when a new transport is up or failed
 	// due to timeout.
+	// 当一次新的传送过程开启或因为超时失败时，ready会关闭并置空
 	ready     chan struct{}
 	transport transport.ClientTransport
 
@@ -989,9 +1003,11 @@ type addrConn struct {
 	connectRetryNum int
 	// backoffDeadline is the time until which resetTransport needs to
 	// wait before increasing connectRetryNum count.
+	// backoffDeadline 标明resetTransport在增加connectRetryNum之前需等待的时间
 	backoffDeadline time.Time
 	// connectDeadline is the time by which all connection
 	// negotiations must complete.
+	// connectDeadline是所有连接协商必须完成的时间。
 	connectDeadline time.Time
 }
 

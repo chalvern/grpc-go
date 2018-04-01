@@ -21,16 +21,18 @@ package grpc
 import (
 	"sync"
 
-	"golang.org/x/net/context"
 	"github.com/chalvern/grpc-go/balancer"
 	"github.com/chalvern/grpc-go/codes"
 	"github.com/chalvern/grpc-go/grpclog"
 	"github.com/chalvern/grpc-go/status"
 	"github.com/chalvern/grpc-go/transport"
+	"golang.org/x/net/context"
 )
 
 // pickerWrapper is a wrapper of balancer.Picker. It blocks on certain pick
 // actions and unblock when there's a picker update.
+// pickerWrapper 是对balancer.Picker的封装，它会在特定的选择过程（balancer应该有一个
+// 切换过程）中阻塞，并在有新的选择器更新时非阻塞。
 type pickerWrapper struct {
 	mu         sync.Mutex
 	done       bool

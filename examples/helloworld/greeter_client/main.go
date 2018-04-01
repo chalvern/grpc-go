@@ -23,9 +23,9 @@ import (
 	"os"
 	"time"
 
-	"golang.org/x/net/context"
 	"github.com/chalvern/grpc-go"
 	pb "github.com/chalvern/grpc-go/examples/helloworld/helloworld"
+	"golang.org/x/net/context"
 )
 
 const (
@@ -35,6 +35,8 @@ const (
 
 func main() {
 	// Set up a connection to the server.
+	// 启动一个到服务端的链接，这里应该会尝试与服务端进行连接，也就是说在
+	// 发起真正的RPCs调用前，客户端已经与服务端进行了连接。
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)

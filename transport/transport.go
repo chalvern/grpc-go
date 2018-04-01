@@ -27,8 +27,6 @@ import (
 	"net"
 	"sync"
 
-	"golang.org/x/net/context"
-	"golang.org/x/net/http2"
 	"github.com/chalvern/grpc-go/codes"
 	"github.com/chalvern/grpc-go/credentials"
 	"github.com/chalvern/grpc-go/keepalive"
@@ -36,6 +34,8 @@ import (
 	"github.com/chalvern/grpc-go/stats"
 	"github.com/chalvern/grpc-go/status"
 	"github.com/chalvern/grpc-go/tap"
+	"golang.org/x/net/context"
+	"golang.org/x/net/http2"
 )
 
 // recvMsg represents the received msg from the transport. All transport
@@ -483,6 +483,8 @@ func NewServerTransport(protocol string, conn net.Conn, config *ServerConfig) (S
 }
 
 // ConnectOptions covers all relevant options for communicating with the server.
+//
+// ConnectOptions包含所有与服务端通信的相关配置信息
 type ConnectOptions struct {
 	// UserAgent is the application user agent.
 	UserAgent string

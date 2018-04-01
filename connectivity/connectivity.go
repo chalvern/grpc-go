@@ -22,8 +22,8 @@
 package connectivity
 
 import (
-	"golang.org/x/net/context"
 	"github.com/chalvern/grpc-go/grpclog"
+	"golang.org/x/net/context"
 )
 
 // State indicates the state of connectivity.
@@ -50,12 +50,14 @@ func (s State) String() string {
 
 const (
 	// Idle indicates the ClientConn is idle.
+	// 空闲
 	Idle State = iota
 	// Connecting indicates the ClienConn is connecting.
 	Connecting
 	// Ready indicates the ClientConn is ready for work.
 	Ready
 	// TransientFailure indicates the ClientConn has seen a failure but expects to recover.
+	// TransientFailure 表示 ClientConn 失败待恢复
 	TransientFailure
 	// Shutdown indicates the ClientConn has started shutting down.
 	Shutdown
