@@ -17,6 +17,7 @@
  */
 
 // Package keepalive defines configurable parameters for point-to-point healthcheck.
+// keepalive包定义很多配置参数，用于点到点健康检查。
 package keepalive
 
 import (
@@ -28,13 +29,22 @@ import (
 // and send pings so intermediaries will be aware of the liveness of the connection.
 // Make sure these parameters are set in coordination with the keepalive policy on the server,
 // as incompatible settings can result in closing of connection.
+//
+// ClientParameters用于设置客户端的keepalive参数。
+// 可以用它来配置客户端的主动探测能力，使得介质（中间层）可以感知到连接失效并从新发起ping请求。
+// 需要确认的是，它所代表的参数必须要和服务端的keepalive策略相匹配，否则会使得连接关闭而导致连接失败。
 type ClientParameters struct {
 	// After a duration of this time if the client doesn't see any activity it pings the server to see if the transport is still alive.
-	Time time.Duration // The current default value is infinity.
+	// 如果这个时间后，客户端没有感知到任何动态，它就会ping服务端来查看是否传输通道仍然是活着的。
+	Time time.Duration // The current default value is infinity. 默认指示无限大
+
 	// After having pinged for keepalive check, the client waits for a duration of Timeout and if no activity is seen even after that
 	// the connection is closed.
-	Timeout time.Duration // The current default value is 20 seconds.
+	// 客户端允许超时的时间跨度，在这个跨度内，会发起ping来检查连接是否还活着；过了这个跨度，连接就关闭
+	Timeout time.Duration // The current default value is 20 seconds. 默认值是20秒
+
 	// If true, client runs keepalive checks even with no active RPCs.
+	//如果设置为true，那么即使在没有活动的RPCs调用的情况下，客户端也会运行keepalive检查
 	PermitWithoutStream bool // false by default.
 }
 

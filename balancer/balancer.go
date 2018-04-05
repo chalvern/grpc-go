@@ -140,6 +140,7 @@ type ClientConn interface {
 }
 
 // BuildOptions contains additional information for Build.
+// 包含Build中需要的一些附加信息
 type BuildOptions struct {
 	// DialCreds is the transport credential the Balancer implementation can
 	// use to dial to a remote load balancer server. The Balancer implementations

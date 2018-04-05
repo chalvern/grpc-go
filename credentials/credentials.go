@@ -20,6 +20,10 @@
 // which encapsulate all the state needed by a client to authenticate with a
 // server and make various assertions, e.g., about the client's identity, role,
 // or whether it is authorized to make a particular call.
+//
+// credentials 包实现了几种可用于gRPC库的认证方式，这个包封装了客户端认证服务端的所有必需
+// 状态，同时提供多种担保（断言），比如：客户的身份、角色，以及其是否被授权发起某个调用。
+//
 package credentials // import "github.com/chalvern/grpc-go/credentials"
 
 import (
@@ -35,10 +39,14 @@ import (
 )
 
 // alpnProtoStr are the specified application level protocols for gRPC.
+// alpnProtoStr 包含了应用层面的协议指示符（这里只有一个h2）
 var alpnProtoStr = []string{"h2"}
 
 // PerRPCCredentials defines the common interface for the credentials which need to
 // attach security information to every RPC (e.g., oauth2).
+//
+// PerRPCCredentials 定义了一个认证相关的接口，这些认证（比如oauth2）把所有RPC调用和安全信息
+// 绑定到一起
 type PerRPCCredentials interface {
 	// GetRequestMetadata gets the current request metadata, refreshing
 	// tokens if required. This should be called by the transport layer on
@@ -49,22 +57,34 @@ type PerRPCCredentials interface {
 	// timeout and cancellation.
 	// TODO(zhaoq): Define the set of the qualified keys instead of leaving
 	// it as an arbitrary string.
+	//
+	// GetRequestMetadata 获取当前请求的元数据，如果必要也会刷新token。此函数应该在传输层的每个
+	// 请求上调用，同时应该把获取的数据保存在请求头或其他上下文。如果一个状态码已经返回了，则把它当
+	// 做RPC的状态码。 uri是请求入口的URI。当底层的实现支持时，ctx可以在超时或取消时使用。
+	// TODO（zhaoq）: 用字段的集合替换这里的字符串。
 	GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error)
+
 	// RequireTransportSecurity indicates whether the credentials requires
 	// transport security.
+	// RequireTransportSecurity 表示证书是否需要tls
 	RequireTransportSecurity() bool
 }
 
 // ProtocolInfo provides information regarding the gRPC wire protocol version,
 // security protocol, security protocol version in use, server name, etc.
+// 提供了gRPC线协议版本、安全协议及其协议版本、服务名等相关的信息。
 type ProtocolInfo struct {
 	// ProtocolVersion is the gRPC wire protocol version.
+	// 协议版本
 	ProtocolVersion string
 	// SecurityProtocol is the security protocol in use.
+	// 安全协议
 	SecurityProtocol string
 	// SecurityVersion is the security protocol version.
+	// 安全协议版本
 	SecurityVersion string
 	// ServerName is the user-configured server name.
+	// 用户配置的服务名
 	ServerName string
 }
 
@@ -79,6 +99,7 @@ var ErrConnDispatched = errors.New("credentials: rawConn is dispatched out of gR
 
 // TransportCredentials defines the common interface for all the live gRPC wire
 // protocols and supported transport security protocols (e.g., TLS, SSL).
+// 为所有现有的gRPC线协议和支持的传输安全协议（比如 TLS，SSL）定义了一个通用接口
 type TransportCredentials interface {
 	// ClientHandshake does the authentication handshake specified by the corresponding
 	// authentication protocol on rawConn for clients. It returns the authenticated
@@ -90,6 +111,8 @@ type TransportCredentials interface {
 	// the error implements Temporary() to have the correct retry behaviors.
 	//
 	// If the returned net.Conn is closed, it MUST close the net.Conn provided.
+	//
+	//
 	ClientHandshake(context.Context, string, net.Conn) (net.Conn, AuthInfo, error)
 	// ServerHandshake does the authentication handshake for servers. It returns
 	// the authenticated connection and the corresponding auth information about
@@ -98,6 +121,7 @@ type TransportCredentials interface {
 	// If the returned net.Conn is closed, it MUST close the net.Conn provided.
 	ServerHandshake(net.Conn) (net.Conn, AuthInfo, error)
 	// Info provides the ProtocolInfo of this TransportCredentials.
+	// 提供了这个TransportCredentials的ProtocolInfo（感觉像是废话。。）
 	Info() ProtocolInfo
 	// Clone makes a copy of this TransportCredentials.
 	Clone() TransportCredentials

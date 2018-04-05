@@ -22,6 +22,7 @@ package resolver
 
 var (
 	// m is a map from scheme to resolver builder.
+	// 保存协议名与域名解析器之间的哈希关系
 	m = make(map[string]Builder)
 	// defaultScheme is the default scheme to use.
 	defaultScheme = "passthrough"
@@ -114,14 +115,19 @@ type Target struct {
 }
 
 // Builder creates a resolver that will be used to watch name resolution updates.
+// Builder创建一个解析器用来跟踪域名解析的更新
 type Builder interface {
 	// Build creates a new resolver for the given target.
 	//
 	// gRPC dial calls Build synchronously, and fails if the returned error is
 	// not nil.
+	//
+	// Build根据给定的目标名创建一个解析器。
+	// gRPC的拨号器同步地调用Build方法，如果Build返回的error不为空，则失败。
 	Build(target Target, cc ClientConn, opts BuildOption) (Resolver, error)
 	// Scheme returns the scheme supported by this resolver.
 	// Scheme is defined at https://github.com/grpc/grpc/blob/master/doc/naming.md.
+	// Scheme 返回这个解析器支持的协议。
 	Scheme() string
 }
 

@@ -492,12 +492,15 @@ type ConnectOptions struct {
 	// TransportCredentials is set.
 	Authority string
 	// Dialer specifies how to dial a network address.
+	// Dialer定义连接网络地址的方法
 	Dialer func(context.Context, string) (net.Conn, error)
 	// FailOnNonTempDialError specifies if gRPC fails on non-temporary dial errors.
 	FailOnNonTempDialError bool
 	// PerRPCCredentials stores the PerRPCCredentials required to issue RPCs.
+	// PerRPCCredentials保存了RPCs调用时所需的PerRPCCredentials
 	PerRPCCredentials []credentials.PerRPCCredentials
 	// TransportCredentials stores the Authenticator required to setup a client connection.
+	// 保存了在创建客户端连接时所需要的认证器
 	TransportCredentials credentials.TransportCredentials
 	// KeepaliveParams stores the keepalive parameters.
 	KeepaliveParams keepalive.ClientParameters

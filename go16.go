@@ -26,13 +26,14 @@ import (
 	"net"
 	"net/http"
 
-	"golang.org/x/net/context"
 	"github.com/chalvern/grpc-go/codes"
 	"github.com/chalvern/grpc-go/status"
 	"github.com/chalvern/grpc-go/transport"
+	"golang.org/x/net/context"
 )
 
 // dialContext connects to the address on the named network.
+// dialContext连接到命名网络中的地址。
 func dialContext(ctx context.Context, network, address string) (net.Conn, error) {
 	return (&net.Dialer{Cancel: ctx.Done()}).Dial(network, address)
 }

@@ -110,6 +110,7 @@ type dialOptions struct {
 	// balancer, and also by WithBalancerName dial option.
 	balancerBuilder balancer.Builder
 	// This is to support grpclb.
+	// 用于grpclb，grpc的负载均衡
 	resolverBuilder  resolver.Builder
 	waitForHandshake bool
 }
@@ -120,6 +121,8 @@ const (
 )
 
 // DialOption configures how we set up the connection.
+//
+// DialOption 设置启动一个连接的配置
 type DialOption func(*dialOptions)
 
 // WithWaitForHandshake blocks until the initial settings frame is received from the
@@ -414,7 +417,11 @@ func Dial(target string, opts ...DialOption) (*ClientConn, error) {
 // https://github.com/grpc/grpc/blob/master/doc/naming.md.
 // e.g. to use dns resolver, a "dns:///" prefix should be applied to the target.
 //
-// DialContext 创建一个到给定目标的客户端连接。
+// DialContext 创建一个到给定目标的客户端连接。 ctx可以用来取消或置过期处于挂起状态的连接
+// 一旦这个方法返回，ctx的取消和过期将会处于noop状态（？）。当这个函数返回以后，为了终止所有
+// 挂起状态的操作，需要用户显式调用 ClientConn.Close 方法
+//
+// tartget的名称有抓们定义，比如：当使用 dns 解析时，应该在target前添加“dns:///”前缀
 //
 func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *ClientConn, err error) {
 	cc := &ClientConn{
@@ -430,11 +437,13 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 		opt(&cc.dopts)
 	}
 
+	// 如果设置了安全标记（需要证书认证）
 	if !cc.dopts.insecure {
 		if cc.dopts.copts.TransportCredentials == nil {
 			return nil, errNoTransportSecurity
 		}
 	} else {
+		// 如果没有设置安全标记（不需要过tls）
 		if cc.dopts.copts.TransportCredentials != nil {
 			return nil, errCredentialsConflict
 		}
@@ -447,6 +456,7 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 
 	cc.mkp = cc.dopts.copts.KeepaliveParams
 
+	// 设定连接器，采用tcp协议与给定的地址连通
 	if cc.dopts.copts.Dialer == nil {
 		cc.dopts.copts.Dialer = newProxyDialer(
 			func(ctx context.Context, addr string) (net.Conn, error) {
@@ -455,18 +465,22 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 		)
 	}
 
+	// 用户代理名，类似 "grpc-go/"
 	if cc.dopts.copts.UserAgent != "" {
 		cc.dopts.copts.UserAgent += " " + grpcUA
 	} else {
 		cc.dopts.copts.UserAgent = grpcUA
 	}
 
+	// 如果设置了超时时间，则把其加入到上下文
 	if cc.dopts.timeout > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, cc.dopts.timeout)
 		defer cancel()
 	}
 
+	// 最后会检查ctx是否有结束信号，如果有结束信号，就返回nil的连接了
+	// 同时返回导致结束的原因（err）并关闭客户端连接
 	defer func() {
 		select {
 		case <-ctx.Done():
@@ -482,6 +496,7 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 	scSet := false
 	if cc.dopts.scChan != nil {
 		// Try to get an initial service config.
+		// 尝试一次获取服务端的初始化配置（后面还会有相关逻辑，而且是阻塞的）
 		select {
 		case sc, ok := <-cc.dopts.scChan:
 			if ok {
@@ -496,6 +511,7 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 	}
 	if cc.dopts.resolverBuilder == nil {
 		// Only try to parse target when resolver builder is not already set.
+		// 当解析器还没准备好时，尝试解析目标地址
 		cc.parsedTarget = parseTarget(cc.target)
 		grpclog.Infof("parsed scheme: %q", cc.parsedTarget.Scheme)
 		cc.dopts.resolverBuilder = resolver.Get(cc.parsedTarget.Scheme)
@@ -503,6 +519,8 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 			// If resolver builder is still nil, the parse target's scheme is
 			// not registered. Fallback to default resolver and set Endpoint to
 			// the original unparsed target.
+			// 如果解析器生成器仍然是nil，则从目标地址解析出来的协议还没注册；
+			// 这种情况下，把Endpoint设置成原生的目标地址
 			grpclog.Infof("scheme %q not registered, fallback to default scheme", cc.parsedTarget.Scheme)
 			cc.parsedTarget = resolver.Target{
 				Scheme:   resolver.GetDefaultScheme(),
@@ -511,21 +529,26 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 			cc.dopts.resolverBuilder = resolver.Get(cc.parsedTarget.Scheme)
 		}
 	} else {
+		// 解析器创建器已经就绪的情况下
 		cc.parsedTarget = resolver.Target{Endpoint: target}
 	}
 	creds := cc.dopts.copts.TransportCredentials
 	if creds != nil && creds.Info().ServerName != "" {
+		// 当证书不为空，且用户定义的服务端名称不为空
 		cc.authority = creds.Info().ServerName
 	} else if cc.dopts.insecure && cc.dopts.copts.Authority != "" {
+		// 当拨号配置为非安全，且连接配置中配置了认证时
 		cc.authority = cc.dopts.copts.Authority
 	} else {
 		// Use endpoint from "scheme://authority/endpoint" as the default
 		// authority for ClientConn.
+		// 其他情况，使用 "scheme://authority/endpoint" 中的 endpoint。
 		cc.authority = cc.parsedTarget.Endpoint
 	}
 
 	if cc.dopts.scChan != nil && !scSet {
 		// Blocking wait for the initial service config.
+		// 阻塞，直到获取到服务端配置
 		select {
 		case sc, ok := <-cc.dopts.scChan:
 			if ok {
@@ -535,10 +558,12 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 			return nil, ctx.Err()
 		}
 	}
+	// 这里又搞了一个监视器，用于监视 scChan 中的 service config。。。
 	if cc.dopts.scChan != nil {
 		go cc.scWatcher()
 	}
 
+	// 克隆一份证书
 	var credsClone credentials.TransportCredentials
 	if creds := cc.dopts.copts.TransportCredentials; creds != nil {
 		credsClone = creds.Clone()
@@ -673,6 +698,7 @@ func (cc *ClientConn) GetState() connectivity.State {
 	return cc.csMgr.getState()
 }
 
+// 监视scChan
 func (cc *ClientConn) scWatcher() {
 	for {
 		select {

@@ -106,6 +106,8 @@ func doHTTPConnectHandshake(ctx context.Context, conn net.Conn, addr string) (_ 
 // newProxyDialer returns a dialer that connects to proxy first if necessary.
 // The returned dialer checks if a proxy is necessary, dial to the proxy with the
 // provided dialer, does HTTP CONNECT handshake and returns the connection.
+// newProxyDialer返回一个连接器，必要情况下回首先连到代理。返回的连接器会检查代理是否是必须的，
+// 如果连接器需要过代理，则会在执行了 HTTP CONNECT 的握手后返回连接。
 func newProxyDialer(dialer func(context.Context, string) (net.Conn, error)) func(context.Context, string) (net.Conn, error) {
 	return func(ctx context.Context, addr string) (conn net.Conn, err error) {
 		var skipHandshake bool

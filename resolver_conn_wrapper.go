@@ -51,6 +51,10 @@ func split2(s, sep string) (string, string, bool) {
 //
 // If target is not a valid scheme://authority/endpoint, it returns {Endpoint:
 // target}.
+//
+// parseTarget把目标地址拆分成一个结构体，包含 协议、认证和终端
+// 如果目标地址地址不是 scheme://authority/endpoint 这种样式，
+// 则返回 {Endpoint: target}
 func parseTarget(target string) (ret resolver.Target) {
 	var ok bool
 	ret.Scheme, ret.Endpoint, ok = split2(target, "://")
