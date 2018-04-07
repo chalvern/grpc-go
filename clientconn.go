@@ -961,6 +961,11 @@ func (ac *addrConn) tryUpdateAddrs(addrs []resolver.Address) bool {
 // under the service (i.e /service/). If there is a default MethodConfig for
 // the service, we return it.
 // Otherwise, we return an empty MethodConfig.
+//
+// 获取传入方法的配置
+// 如果有一个传入方法的精确匹配（比如 /service/method）,就返回相关的MethodConfig。
+// 如果没有传入方法的精确匹配，就查找默认的配置（比如 /service/）,如果找到了，就返回
+// 默认配置，否则就返回一个空的MethodConfig。
 func (cc *ClientConn) GetMethodConfig(method string) MethodConfig {
 	// TODO: Avoid the locking here.
 	cc.mu.RLock()

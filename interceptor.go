@@ -23,11 +23,15 @@ import (
 )
 
 // UnaryInvoker is called by UnaryClientInterceptor to complete RPCs.
+//
+// 被UnaryClientInterceptor调用来完成RPCs调用
 type UnaryInvoker func(ctx context.Context, method string, req, reply interface{}, cc *ClientConn, opts ...CallOption) error
 
 // UnaryClientInterceptor intercepts the execution of a unary RPC on the client. invoker is the handler to complete the RPC
 // and it is the responsibility of the interceptor to call it.
 // This is an EXPERIMENTAL API.
+//
+// 拦截客户端上一些一元RPC调用的执行。invoker作为一个操控手完成RPC掉欧勇，同时也负责拦截器能调用RPC。
 type UnaryClientInterceptor func(ctx context.Context, method string, req, reply interface{}, cc *ClientConn, invoker UnaryInvoker, opts ...CallOption) error
 
 // Streamer is called by StreamClientInterceptor to create a ClientStream.

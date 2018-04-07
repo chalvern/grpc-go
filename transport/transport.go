@@ -543,18 +543,23 @@ type Options struct {
 }
 
 // CallHdr carries the information of a particular RPC.
+// 包含一个RPC相关的信息
 type CallHdr struct {
 	// Host specifies the peer's host.
+	// 标明Host
 	Host string
 
 	// Method specifies the operation to perform.
+	// 标明执行的方法
 	Method string
 
 	// SendCompress specifies the compression algorithm applied on
 	// outbound message.
+	// 标明送出的数据的压缩算法
 	SendCompress string
 
 	// Creds specifies credentials.PerRPCCredentials for a call.
+	// 标明一个调用的认证
 	Creds credentials.PerRPCCredentials
 
 	// Flush indicates whether a new stream command should be sent
@@ -563,6 +568,10 @@ type CallHdr struct {
 	// If it's true, the transport may modify the flush decision
 	// for performance purposes.
 	// If it's false, new stream will never be flushed.
+	//
+	// 标明是否直接发送新流的命令到另一端，而不需要等待数据。（？）这个仅用于指示。
+	// 如果设置true，传输层可能会为了性能而修数据流的决策。
+	// 如果设置false，新的流将永远不会被被flush。（Flush应该是h2的一种模式）
 	Flush bool
 
 	// ContentSubtype specifies the content-subtype for a request. For example, a
@@ -571,6 +580,9 @@ type CallHdr struct {
 	// lowercase, otherwise the behavior is undefined. See
 	// https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#requests
 	// for more details.
+	//
+	// 标明一起请求的content-subtype。比如：一个 proto 的 content-subtype 会使形成
+	// "application/grpc+proto"。这个字段的值必须都是小写的，否则就相当于是未定义的。
 	ContentSubtype string
 }
 

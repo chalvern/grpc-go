@@ -30,7 +30,6 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/net/context"
 	"github.com/chalvern/grpc-go/codes"
 	"github.com/chalvern/grpc-go/credentials"
 	"github.com/chalvern/grpc-go/encoding"
@@ -40,6 +39,7 @@ import (
 	"github.com/chalvern/grpc-go/stats"
 	"github.com/chalvern/grpc-go/status"
 	"github.com/chalvern/grpc-go/transport"
+	"golang.org/x/net/context"
 )
 
 // Compressor defines the interface gRPC uses to compress a message.
@@ -141,6 +141,7 @@ func (d *gzipDecompressor) Type() string {
 }
 
 // callInfo contains all related configuration and information about an RPC.
+// 包含了一个RCP调用包含的所有相关配置和信息
 type callInfo struct {
 	compressorType        string
 	failFast              bool
@@ -159,13 +160,20 @@ func defaultCallInfo() *callInfo {
 
 // CallOption configures a Call before it starts or extracts information from
 // a Call after it completes.
+//
+// 在一个调用开始前配置它，或者在一个调用结束后抽取信息
 type CallOption interface {
 	// before is called before the call is sent to any server.  If before
 	// returns a non-nil error, the RPC fails with that error.
+	//
+	// 在调用发送到任何服务前调用。
+	// 如果返回值非空，RPC调用失败
 	before(*callInfo) error
 
 	// after is called after the call has completed.  after cannot return an
 	// error, so any failures should be reported via output parameters.
+	//
+	// 在调用结束时调用；这奇葩不会返回错误值，所以任何失败情况都应该通过输出参数显示
 	after(*callInfo)
 }
 

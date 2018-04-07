@@ -31,10 +31,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/chalvern/grpc-go/codes"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	spb "google.golang.org/genproto/googleapis/rpc/status"
-	"github.com/chalvern/grpc-go/codes"
 )
 
 // statusError is an alias of a status proto.  It implements error and Status,
@@ -52,6 +52,9 @@ func (se *statusError) GRPCStatus() *Status {
 
 // Status represents an RPC status code, message, and details.  It is immutable
 // and should be created with New, Newf, or FromProto.
+//
+// 标明RPC的状态码、信息和详情（protobuf里面，即spb.Status里包含这三个字段）
+// 这个结构是不可修改的，因此应该通过New，Newf或者FromProto方法来创建
 type Status struct {
 	s *spb.Status
 }
@@ -126,7 +129,9 @@ func FromError(err error) (s *Status, ok bool) {
 	if err == nil {
 		return &Status{s: &spb.Status{Code: int32(codes.OK)}}, true
 	}
-	if se, ok := err.(interface{ GRPCStatus() *Status }); ok {
+	if se, ok := err.(interface {
+		GRPCStatus() *Status
+	}); ok {
 		return se.GRPCStatus(), true
 	}
 	return New(codes.Unknown, err.Error()), false
@@ -182,7 +187,9 @@ func Code(err error) codes.Code {
 	if err == nil {
 		return codes.OK
 	}
-	if se, ok := err.(interface{ GRPCStatus() *Status }); ok {
+	if se, ok := err.(interface {
+		GRPCStatus() *Status
+	}); ok {
 		return se.GRPCStatus().Code()
 	}
 	return codes.Unknown
