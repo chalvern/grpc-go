@@ -568,12 +568,14 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 	if creds := cc.dopts.copts.TransportCredentials; creds != nil {
 		credsClone = creds.Clone()
 	}
+	// 均衡器构建参数
 	cc.balancerBuildOpts = balancer.BuildOptions{
 		DialCreds: credsClone,
 		Dialer:    cc.dopts.copts.Dialer,
 	}
 
 	// Build the resolver.
+	// 构建解析器
 	cc.resolverWrapper, err = newCCResolverWrapper(cc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build resolver: %v", err)
@@ -585,9 +587,17 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 	// those to balancer. Balancer creates new addrConn. addrConn fails to
 	// connect, and calls resolveNow(). resolveNow() tries to use the non-ready
 	// resolverWrapper.
+	//
+	// 当resolverWrapper创建好了以后，就开始解析器封装器的协程
+	//
+	// 如果协程在resolverWrapper准备好之前就开始执行，则可能有下面的后果：
+	// 协程向cc（客户端连接）发送更新；cc把这种更新传给均衡器；均衡器创建新的addrConn；
+	// addrConn无法连接，于是调用resolveNow(); resolveNow()尝试使用未准备好的
+	// resolverWrapper。
 	cc.resolverWrapper.start()
 
 	// A blocking dial blocks until the clientConn is ready.
+	// 等待cc就绪
 	if cc.dopts.block {
 		for {
 			s := cc.GetState()
@@ -650,6 +660,7 @@ func (csm *connectivityStateManager) getNotifyChan() <-chan struct{} {
 }
 
 // ClientConn represents a client connection to an RPC server.
+// 标明客户端到RPC服务端的一个连接
 type ClientConn struct {
 	ctx    context.Context
 	cancel context.CancelFunc //取消函数，只是一个函数
@@ -671,7 +682,7 @@ type ClientConn struct {
 	// Keepalive parameter can be updated if a GoAway is received.
 	mkp             keepalive.ClientParameters
 	curBalancerName string
-	preBalancerName string // previous balancer name.
+	preBalancerName string // previous balancer name. 之前的均衡器名
 	curAddresses    []resolver.Address
 	balancerWrapper *ccBalancerWrapper
 }
@@ -718,6 +729,7 @@ func (cc *ClientConn) scWatcher() {
 	}
 }
 
+// 解析地址
 func (cc *ClientConn) handleResolvedAddrs(addrs []resolver.Address, err error) {
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
@@ -726,6 +738,7 @@ func (cc *ClientConn) handleResolvedAddrs(addrs []resolver.Address, err error) {
 		return
 	}
 
+	// 如果传入的地址和当前地址是一模一样的，就直接返回
 	if reflect.DeepEqual(cc.curAddresses, addrs) {
 		return
 	}
@@ -735,6 +748,7 @@ func (cc *ClientConn) handleResolvedAddrs(addrs []resolver.Address, err error) {
 	if cc.dopts.balancerBuilder == nil {
 		// Only look at balancer types and switch balancer if balancer dial
 		// option is not set.
+		// 仅仅在均衡器dial配置没有设置的情况下，查看均衡器的类型并切换均衡器
 		var isGRPCLB bool
 		for _, a := range addrs {
 			if a.Type == resolver.GRPCLB {
@@ -744,12 +758,16 @@ func (cc *ClientConn) handleResolvedAddrs(addrs []resolver.Address, err error) {
 		}
 		var newBalancerName string
 		if isGRPCLB {
+			// 如果是GRPCLB这种均衡模式
 			newBalancerName = grpclbName
 		} else {
 			// Address list doesn't contain grpclb address. Try to pick a
 			// non-grpclb balancer.
+			// 如果不是GRPCLB这种均衡模式，尝试搞一个非grpclb均衡器
 			newBalancerName = cc.curBalancerName
 			// If current balancer is grpclb, switch to the previous one.
+			// 如果当前是grpclb，就切换到上一个均衡器
+			// （如果上一个也是grpclb怎么办？）
 			if newBalancerName == grpclbName {
 				newBalancerName = cc.preBalancerName
 			}
@@ -758,6 +776,9 @@ func (cc *ClientConn) handleResolvedAddrs(addrs []resolver.Address, err error) {
 			//   (curBalancerName="")
 			// - the first time handling non-grpclb addresses
 			//   (curBalancerName="grpclb", preBalancerName="")
+			//
+			// 两种情况：1）第一次处理被解析的地址；
+			// 2)第一次处理非grpclb的地址。
 			if newBalancerName == "" {
 				newBalancerName = PickFirstBalancerName
 			}
@@ -766,9 +787,14 @@ func (cc *ClientConn) handleResolvedAddrs(addrs []resolver.Address, err error) {
 	} else if cc.balancerWrapper == nil {
 		// Balancer dial option was set, and this is the first time handling
 		// resolved addresses. Build a balancer with dopts.balancerBuilder.
+		//
+		// 如果cc.dopts.balancerBuilder已存在，且cc.balancerWrapper为空，
+		// 说明这是第一次处理被解析的地址，则利用dopts.balancerBuilder创
+		// 建一个均衡器
 		cc.balancerWrapper = newCCBalancerWrapper(cc, cc.dopts.balancerBuilder, cc.balancerBuildOpts)
 	}
 
+	// 调用均衡器方法来解析地址
 	cc.balancerWrapper.handleResolvedAddrs(addrs, nil)
 }
 
@@ -780,6 +806,13 @@ func (cc *ClientConn) handleResolvedAddrs(addrs []resolver.Address, err error) {
 // this function returns.
 //
 // Caller must hold cc.mu.
+//
+// 从当前均衡器切换到给定名称的均衡器
+//
+// 它不会把当前地址列表发送给新的均衡器。如果需要这样，也应该是这个函数的调用者在调用完
+// 这个函数以后来调用。
+//
+// Caller必须要维护cc.mu
 func (cc *ClientConn) switchBalancer(name string) {
 	if cc.conns == nil {
 		return
@@ -950,6 +983,9 @@ func (cc *ClientConn) getTransport(ctx context.Context, failfast bool) (transpor
 
 // handleServiceConfig parses the service config string in JSON format to Go native
 // struct ServiceConfig, and store both the struct and the JSON string in ClientConn.
+//
+// 解析服务端配置JSON格式的字符串，转换成Go原生的结构ServiceConfig，然后把这个结构及想一个字符串
+// 保存在ClientConn里。
 func (cc *ClientConn) handleServiceConfig(js string) error {
 	sc, err := parseServiceConfig(js)
 	if err != nil {
@@ -958,15 +994,23 @@ func (cc *ClientConn) handleServiceConfig(js string) error {
 	cc.mu.Lock()
 	cc.scRaw = js
 	cc.sc = sc
-	if sc.LB != nil && *sc.LB != grpclbName { // "grpclb" is not a valid balancer option in service config.
+	if sc.LB != nil && *sc.LB != grpclbName {
+		// "grpclb" is not a valid balancer option in service config.
+		// “grpclb”不是一个合法的服务端配置均衡参数
+		//
 		if cc.curBalancerName == grpclbName {
 			// If current balancer is grpclb, there's at least one grpclb
 			// balancer address in the resolved list. Don't switch the balancer,
 			// but change the previous balancer name, so if a new resolved
 			// address list doesn't contain grpclb address, balancer will be
 			// switched to *sc.LB.
+			//
+			// 如果当前的均衡器是grpclb，那么在解析的列表中至少有一个grpclb的均衡器地址。
+			// 这种情况下，不要切换均衡器，只需要修改上一个均衡器的名称。
+			// 如果一个新的解析地址列表不包含grpclb的地址，均衡器自动切换成 *sc.LB。
 			cc.preBalancerName = *sc.LB
 		} else {
+			//
 			cc.switchBalancer(*sc.LB)
 			cc.balancerWrapper.handleResolvedAddrs(cc.curAddresses, nil)
 		}

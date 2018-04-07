@@ -58,29 +58,43 @@ func GetDefaultScheme() string {
 }
 
 // AddressType indicates the address type returned by name resolution.
+// 标明名词解析器返回的地址类型
 type AddressType uint8
 
 const (
 	// Backend indicates the address is for a backend server.
+	// 标明返回的地址是后端服务器的地址
 	Backend AddressType = iota
 	// GRPCLB indicates the address is for a grpclb load balancer.
+	// 标明返回的地址是 grpclb 负载均衡器的地址
 	GRPCLB
 )
 
 // Address represents a server the client connects to.
 // This is the EXPERIMENTAL API and may be changed or extended in the future.
+//
+// Address代表一个服务端。
+// 注意：这了的API是实验性质的，未来可能会改变或者扩展
 type Address struct {
 	// Addr is the server address on which a connection will be established.
+	// 地址
 	Addr string
 	// Type is the type of this address.
+	// 地址类型
 	Type AddressType
 	// ServerName is the name of this address.
 	//
 	// e.g. if Type is GRPCLB, ServerName should be the name of the remote load
 	// balancer, not the name of the backend.
+	//
+	// ServerName是这个地址的名称
+	//
+	// 比如：如果类型是 GRPCLB，服务名称应该是远程负载均衡器的名称，而不是后端的名称
 	ServerName string
 	// Metadata is the information associated with Addr, which may be used
 	// to make load balancing decision.
+	//
+	// 标明Addr相关的元数据，这个数据会用来为负载均衡器做决策
 	Metadata interface{}
 }
 

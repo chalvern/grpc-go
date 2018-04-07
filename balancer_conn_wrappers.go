@@ -91,6 +91,9 @@ type resolverUpdate struct {
 
 // ccBalancerWrapper is a wrapper on top of cc for balancers.
 // It implements balancer.ClientConn interface.
+//
+// 是均衡器的一层封装，用于上层的cc（客户端连接）调用
+// 它实现了balancer.ClientConn的接口
 type ccBalancerWrapper struct {
 	cc               *ClientConn
 	balancer         balancer.Balancer
@@ -102,6 +105,7 @@ type ccBalancerWrapper struct {
 	subConns map[*acBalancerWrapper]struct{}
 }
 
+// 创建一个新的客户端连接（CC）均衡器封装体
 func newCCBalancerWrapper(cc *ClientConn, b balancer.Builder, bopts balancer.BuildOptions) *ccBalancerWrapper {
 	ccb := &ccBalancerWrapper{
 		cc:               cc,
@@ -110,6 +114,7 @@ func newCCBalancerWrapper(cc *ClientConn, b balancer.Builder, bopts balancer.Bui
 		done:             make(chan struct{}),
 		subConns:         make(map[*acBalancerWrapper]struct{}),
 	}
+	// 在创新 均衡器封装 的时候，就立马新建一个协程进行监控
 	go ccb.watcher()
 	ccb.balancer = b.Build(ccb, bopts)
 	return ccb
@@ -117,9 +122,12 @@ func newCCBalancerWrapper(cc *ClientConn, b balancer.Builder, bopts balancer.Bui
 
 // watcher balancer functions sequencially, so the balancer can be implemeneted
 // lock-free.
+//
+// 顺序地监控均衡器方法，从而使得均衡器可以不用加锁就可能实现。
 func (ccb *ccBalancerWrapper) watcher() {
 	for {
 		select {
+		// 如果发现状态改变了
 		case t := <-ccb.stateChangeQueue.get():
 			ccb.stateChangeQueue.load()
 			select {
@@ -129,6 +137,7 @@ func (ccb *ccBalancerWrapper) watcher() {
 			default:
 			}
 			ccb.balancer.HandleSubConnStateChange(t.sc, t.state)
+		// 如果发现解析器更新的信息
 		case t := <-ccb.resolverUpdateCh:
 			select {
 			case <-ccb.done:
@@ -177,11 +186,13 @@ func (ccb *ccBalancerWrapper) handleSubConnStateChange(sc balancer.SubConn, s co
 	})
 }
 
+// 均衡器，解析地址
 func (ccb *ccBalancerWrapper) handleResolvedAddrs(addrs []resolver.Address, err error) {
 	select {
 	case <-ccb.resolverUpdateCh:
 	default:
 	}
+	// 向解析器更新频道发送一个更新
 	ccb.resolverUpdateCh <- &resolverUpdate{
 		addrs: addrs,
 		err:   err,

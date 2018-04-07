@@ -43,7 +43,7 @@ type MethodConfig struct {
 	// the connection is ready by default (!failfast). The value specified via the
 	// gRPC client API will override the value set here.
 	//
-	// WaitForReady标明，默认情况下，发送到这个方法的RPCs调用，在连接就绪前是否应该等待
+	// 标明默认情况下，发送到这个方法的RPCs调用，在连接就绪前是否应该等待
 	// （也就是说不是failfast）。通过gRPC客户端API设置可以覆盖这个值。
 	WaitForReady *bool
 	// Timeout is the default timeout for RPCs sent to this method. The actual
@@ -51,7 +51,7 @@ type MethodConfig struct {
 	// set by the application via the gRPC client API.  If either one is not set,
 	// then the other will be used.  If neither is set, then the RPC has no deadline.
 	//
-	// Timeout是发送到这个方法的RPCs调用的默认超时时间。实际终止时间不应该大于这个值和应用层
+	// 标明发送到这个方法的RPCs调用的默认超时时间。实际终止时间不应该大于这个值和应用层
 	// 通过gRPC客户端API设置的值，只要任何一个地方设置就ok。如果两个地方都没有设置，那么RPC
 	// 调用就不会超时。
 	Timeout *time.Duration
@@ -62,14 +62,15 @@ type MethodConfig struct {
 	// by the application via the gRPC client API. If either one is not set, then the other
 	// will be used.  If neither is set, then the built-in default is used.
 	//
-	// MaxReqSize规定流（客户端到服务端）中的每个请求的最大负载字节。这个尺寸指的是信息被压缩序列化后的值
+	// 规定流（客户端到服务端）中的每个请求的最大负载字节。这个尺寸指的是信息被压缩序列化后的值
 	// （还没有经过流压缩，这里指出两层压缩，一层是信息层面的压缩，一层是流层的压缩）。
 	// 实际最大值不应该大于这个值和应用层通过gRPC客户端API设置的值，只要任何一个地方设置就ok。如果两个地方
 	// 都没有设置，那么就会使用内置的默认值。
 	MaxReqSize *int
 	// MaxRespSize is the maximum allowed payload size for an individual response in a
 	// stream (server->client) in bytes.
-	// MaxRespSize标明流（服务端到客户端）中每个相应的最大值。
+	//
+	// 标明流（服务端到客户端）中每个相应的最大值。
 	MaxRespSize *int
 }
 
@@ -84,12 +85,14 @@ type MethodConfig struct {
 type ServiceConfig struct {
 	// LB is the load balancer the service providers recommends. The balancer specified
 	// via grpc.WithBalancer will override this.
+	//
 	// LB是服务端推荐使用的负载均衡器。通过grpc.WithBalancer传入的值将会覆盖这个值
 	LB *string
 	// Methods contains a map for the methods in this service.
 	// If there is an exact match for a method (i.e. /service/method) in the map, use the corresponding MethodConfig.
 	// If there's no exact match, look for the default config for the service (/service/) and use the corresponding MethodConfig if it exists.
 	// Otherwise, the method has no MethodConfig to use.
+	//
 	// Methods是一个字典，存放这个服务提供的方法
 	// 如果恰好有一个方法（比如 /service/method）精确匹配，就使用相关的MethodConfig。假如没有，在存在默认配置的情况下会匹配服务默认的配置（/service/）。
 	// 否则，就没有MethodConfig使用了。
@@ -157,6 +160,7 @@ func (j jsonName) generatePath() (string, bool) {
 }
 
 // TODO(lyuxuan): delete this struct after cleaning up old service config implementation.
+// Method Config
 type jsonMC struct {
 	Name                    *[]jsonName
 	WaitForReady            *bool
@@ -171,6 +175,7 @@ type jsonSC struct {
 	MethodConfig        *[]jsonMC
 }
 
+// 解析json格式的服务端配置
 func parseServiceConfig(js string) (ServiceConfig, error) {
 	var rsc jsonSC
 	err := json.Unmarshal([]byte(js), &rsc)

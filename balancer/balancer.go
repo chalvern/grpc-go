@@ -112,13 +112,22 @@ type NewSubConnOptions struct{}
 // brand new implementation of this interface. For the situations like
 // testing, the new implementation should embed this interface. This allows
 // gRPC to add new methods to this interface.
+//
+// ClientConn标明一个gRPC的客户端连接（ClinetConn）
+//
+// 这个接口会被gRPC实现。用户不需要重新实现这个接口。当测试的时候，如果要实现这个接口，
+// 应该采用嵌入此接口的方式，从而允许往这个接口添加新方法。
 type ClientConn interface {
 	// NewSubConn is called by balancer to create a new SubConn.
 	// It doesn't block and wait for the connections to be established.
 	// Behaviors of the SubConn can be controlled by options.
+	//
+	// 创建新的SubConn（子连接），它不会阻塞等待连接建立，SubConn的行为可以通过
+	// 传入配置选项来控制。
 	NewSubConn([]resolver.Address, NewSubConnOptions) (SubConn, error)
 	// RemoveSubConn removes the SubConn from ClientConn.
 	// The SubConn will be shutdown.
+	// 从ClientConn移除SubConn，SubConn会停止。
 	RemoveSubConn(SubConn)
 
 	// UpdateBalancerState is called by balancer to nofity gRPC that some internal
@@ -128,14 +137,17 @@ type ClientConn interface {
 	// on the new picker to pick new SubConn.
 	//
 	// UpdateBalancerState 被balancer调用来通知 gRPC， 平衡器的内部状态已发生改变
-	// gRPC 会更新 ClientConn 的连接状态，同时会在新的选择器上调用pick方法来选择新的SubConn
 	//
+	// gRPC 会更新 ClientConn 的连接状态，同时会在新的选择器上调用pick方法来选择新的SubConn
 	UpdateBalancerState(s connectivity.State, p Picker)
 
 	// ResolveNow is called by balancer to notify gRPC to do a name resolving.
+	//
+	// ResolveNow通知gRPC进行名词解析
 	ResolveNow(resolver.ResolveNowOption)
 
 	// Target returns the dial target for this ClientConn.
+	// 返回拨号目标
 	Target() string
 }
 
@@ -145,10 +157,16 @@ type BuildOptions struct {
 	// DialCreds is the transport credential the Balancer implementation can
 	// use to dial to a remote load balancer server. The Balancer implementations
 	// can ignore this if it does not need to talk to another party securely.
+	//
+	// DialCreds是Balancer连接到远程负载均衡服务端时使用的传输证书。在不需要进行安全连接
+	// 的情况下，均衡器实现可以忽略这个字段。
 	DialCreds credentials.TransportCredentials
 	// Dialer is the custom dialer the Balancer implementation can use to dial
 	// to a remote load balancer server. The Balancer implementations
 	// can ignore this if it doesn't need to talk to remote balancer.
+	//
+	// Dialer是Balancer连接到远程负载均衡服务器时使用的定制拨号器（dialer）。在不需要连接
+	// 到远端均衡器的情况下，均衡器实现可以忽略这个字段。
 	Dialer func(context.Context, string) (net.Conn, error)
 }
 
