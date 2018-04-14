@@ -68,6 +68,10 @@ import (
 	"google.golang.org/grpc/testdata"
 )
 
+func init() {
+	grpc.RegisterChannelz()
+}
+
 var (
 	// For headers:
 	testMetadata = metadata.MD{
@@ -478,6 +482,10 @@ type test struct {
 	srv     *grpc.Server
 	srvAddr string
 
+	// srvs and srvAddrs are set once startServers is called.
+	srvs     []*grpc.Server
+	srvAddrs []string
+
 	cc          *grpc.ClientConn // nil until requested via clientConn
 	restoreLogs func()           // nil unless declareLogNoise is used
 }
@@ -497,6 +505,11 @@ func (te *test) tearDown() {
 	}
 	if te.srv != nil {
 		te.srv.Stop()
+	}
+	if len(te.srvs) != 0 {
+		for _, s := range te.srvs {
+			s.Stop()
+		}
 	}
 }
 
@@ -748,7 +761,6 @@ type lazyConn struct {
 
 func (l *lazyConn) Write(b []byte) (int, error) {
 	if atomic.LoadInt32(&(l.beLazy)) == 1 {
-		// The sleep duration here needs to less than the leakCheck deadline.
 		time.Sleep(time.Second)
 	}
 	return l.Conn.Write(b)
@@ -963,7 +975,7 @@ func testServerGoAwayPendingRPC(t *testing.T, e env) {
 	}
 	// The existing RPC should be still good to proceed.
 	if err := stream.Send(req); err != nil {
-		t.Fatalf("%v.Send(%v) = %v, want <nil>", stream, req, err)
+		t.Fatalf("%v.Send(_) = %v, want <nil>", stream, err)
 	}
 	if _, err := stream.Recv(); err != nil {
 		t.Fatalf("%v.Recv() = _, %v, want _, <nil>", stream, err)
@@ -3053,7 +3065,6 @@ func testMultipleSetHeaderStreamingRPCError(t *testing.T, e env) {
 	if !reflect.DeepEqual(header, expectedHeader) {
 		t.Fatalf("Received header metadata %v, want %v", header, expectedHeader)
 	}
-
 	if err := stream.CloseSend(); err != nil {
 		t.Fatalf("%v.CloseSend() got %v, want %v", stream, err, nil)
 	}
@@ -3153,44 +3164,6 @@ func testRetry(t *testing.T, e env) {
 		if status.Code(err) != tc.errCode {
 			t.Errorf("%+v: tsc.EmptyCall(_, _) = _, %v, want _, Code=%v", tc, err, tc.errCode)
 		}
-	}
-}
-
-func TestRPCTimeout(t *testing.T) {
-	defer leakcheck.Check(t)
-	for _, e := range listTestEnv() {
-		testRPCTimeout(t, e)
-	}
-}
-
-// TODO(zhaoq): Have a better test coverage of timeout and cancellation mechanism.
-func testRPCTimeout(t *testing.T, e env) {
-	te := newTest(t, e)
-	te.startServer(&testServer{security: e.security, unaryCallSleepTime: 50 * time.Millisecond})
-	defer te.tearDown()
-
-	cc := te.clientConn()
-	tc := testpb.NewTestServiceClient(cc)
-
-	const argSize = 2718
-	const respSize = 314
-
-	payload, err := newPayload(testpb.PayloadType_COMPRESSABLE, argSize)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	req := &testpb.SimpleRequest{
-		ResponseType: testpb.PayloadType_COMPRESSABLE,
-		ResponseSize: respSize,
-		Payload:      payload,
-	}
-	for i := -1; i <= 10; i++ {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(i)*time.Millisecond)
-		if _, err := tc.UnaryCall(ctx, req); status.Code(err) != codes.DeadlineExceeded {
-			t.Fatalf("TestService/UnaryCallv(_, _) = _, %v; want <nil>, error code: %s", err, codes.DeadlineExceeded)
-		}
-		cancel()
 	}
 }
 
@@ -3687,7 +3660,7 @@ func testClientStreaming(t *testing.T, e env, sizes []int) {
 			Payload: payload,
 		}
 		if err := stream.Send(req); err != nil {
-			t.Fatalf("%v.Send(%v) = %v, want <nil>", stream, req, err)
+			t.Fatalf("%v.Send(_) = %v, want <nil>", stream, err)
 		}
 		sum += s
 	}
@@ -4868,6 +4841,34 @@ func (ss *stubServer) Stop() {
 	}
 }
 
+func TestGRPCMethod(t *testing.T) {
+	defer leakcheck.Check(t)
+	var method string
+	var ok bool
+
+	ss := &stubServer{
+		emptyCall: func(ctx context.Context, in *testpb.Empty) (*testpb.Empty, error) {
+			method, ok = grpc.Method(ctx)
+			return &testpb.Empty{}, nil
+		},
+	}
+	if err := ss.Start(nil); err != nil {
+		t.Fatalf("Error starting endpoint server: %v", err)
+	}
+	defer ss.Stop()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	if _, err := ss.client.EmptyCall(ctx, &testpb.Empty{}); err != nil {
+		t.Fatalf("ss.client.EmptyCall(_, _) = _, %v; want _, nil", err)
+	}
+
+	if want := "/grpc.testing.TestService/EmptyCall"; !ok || method != want {
+		t.Fatalf("grpc.Method(_) = %q, %v; want %q, true", method, ok, want)
+	}
+}
+
 func TestUnaryProxyDoesNotForwardMetadata(t *testing.T) {
 	const mdkey = "somedata"
 
@@ -5050,7 +5051,7 @@ func TestTapTimeout(t *testing.T) {
 	ss := &stubServer{
 		emptyCall: func(ctx context.Context, in *testpb.Empty) (*testpb.Empty, error) {
 			<-ctx.Done()
-			return &testpb.Empty{}, nil
+			return nil, status.Errorf(codes.Canceled, ctx.Err().Error())
 		},
 	}
 	if err := ss.Start(sopts); err != nil {
@@ -6169,7 +6170,7 @@ func TestFailFastRPCErrorOnBadCertificates(t *testing.T) {
 	defer te.tearDown()
 
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(clientAlwaysFailCred{})}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	cc, err := grpc.DialContext(ctx, te.srvAddr, opts...)
 	if err != nil {
@@ -6189,4 +6190,41 @@ func TestFailFastRPCErrorOnBadCertificates(t *testing.T) {
 		time.Sleep(time.Millisecond)
 	}
 	te.t.Fatalf("TestService/EmptyCall(_, _) = _, %v, want err.Error() contains %q", err, clientAlwaysFailCredErrorMsg)
+}
+
+func TestRPCTimeout(t *testing.T) {
+	defer leakcheck.Check(t)
+	for _, e := range listTestEnv() {
+		testRPCTimeout(t, e)
+	}
+}
+
+func testRPCTimeout(t *testing.T, e env) {
+	te := newTest(t, e)
+	te.startServer(&testServer{security: e.security, unaryCallSleepTime: 500 * time.Millisecond})
+	defer te.tearDown()
+
+	cc := te.clientConn()
+	tc := testpb.NewTestServiceClient(cc)
+
+	const argSize = 2718
+	const respSize = 314
+
+	payload, err := newPayload(testpb.PayloadType_COMPRESSABLE, argSize)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := &testpb.SimpleRequest{
+		ResponseType: testpb.PayloadType_COMPRESSABLE,
+		ResponseSize: respSize,
+		Payload:      payload,
+	}
+	for i := -1; i <= 10; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(i)*time.Millisecond)
+		if _, err := tc.UnaryCall(ctx, req); status.Code(err) != codes.DeadlineExceeded {
+			t.Fatalf("TestService/UnaryCallv(_, _) = _, %v; want <nil>, error code: %s", err, codes.DeadlineExceeded)
+		}
+		cancel()
+	}
 }
