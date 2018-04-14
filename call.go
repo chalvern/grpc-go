@@ -88,7 +88,7 @@ func invoke(ctx context.Context, method string, req, reply interface{}, cc *Clie
 			return err
 		}
 		cs := csInt.(*clientStream)
-		// 2）发送rpc调用
+		// 2）发送rpc调用，req是proto里定义的request结构
 		if err := cs.SendMsg(req); err != nil {
 			if !cs.c.failFast && cs.attempt.s.Unprocessed() && firstAttempt {
 				// TODO: Add a field to header for grpc-transparent-retry-attempts

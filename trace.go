@@ -31,10 +31,15 @@ import (
 
 // EnableTracing controls whether to trace RPCs using the golang.org/x/net/trace package.
 // This should only be set before any RPCs are sent or received by this program.
+//
+// 用来控制是否使用 golang.org/x/net/trace 这个包来trace RPCs调用
+// 只应该在任何RPCs调用发送或接收到之前设置
 var EnableTracing bool
 
 // methodFamily returns the trace family for the given method.
 // It turns "/pkg.Service/GetFoo" into "pkg.Service".
+//
+// 返回给定方法的trace分类，比如"/pkg.Service/GetFoo"会返回"pkg.Service"。
 func methodFamily(m string) string {
 	m = strings.TrimPrefix(m, "/") // remove leading slash
 	if i := strings.Index(m, "/"); i >= 0 {

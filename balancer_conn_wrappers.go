@@ -254,6 +254,8 @@ func (ccb *ccBalancerWrapper) Target() string {
 
 // acBalancerWrapper is a wrapper on top of ac for balancers.
 // It implements balancer.SubConn interface.
+//
+// 封装了ac的均衡器
 type acBalancerWrapper struct {
 	mu sync.Mutex
 	ac *addrConn

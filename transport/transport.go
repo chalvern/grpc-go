@@ -588,27 +588,39 @@ type CallHdr struct {
 
 // ClientTransport is the common interface for all gRPC client-side transport
 // implementations.
+//
+// 所有客户端传输的通用接口
 type ClientTransport interface {
 	// Close tears down this transport. Once it returns, the transport
 	// should not be accessed any more. The caller must make sure this
 	// is called only once.
+	//
+	// 关闭传输。一旦返回，传输就不能再使用了。调用者必须确认这个方法只被调用一次。
 	Close() error
 
 	// GracefulClose starts to tear down the transport. It stops accepting
 	// new RPCs and wait the completion of the pending RPCs.
+	//
+	// 开始关闭传输。停止接受新的RPCs调用，等待挂起的RPCs完成。
 	GracefulClose() error
 
 	// Write sends the data for the given stream. A nil stream indicates
 	// the write is to be performed on the transport as a whole.
+	//
+	// 向给定的流发送信息。一个nil的流标明在整个过程中执行写操作
 	Write(s *Stream, hdr []byte, data []byte, opts *Options) error
 
 	// NewStream creates a Stream for an RPC.
+	// 为一个RPC调用创建一个流
 	NewStream(ctx context.Context, callHdr *CallHdr) (*Stream, error)
 
 	// CloseStream clears the footprint of a stream when the stream is
 	// not needed any more. The err indicates the error incurred when
 	// CloseStream is called. Must be called when a stream is finished
 	// unless the associated transport is closing.
+	//
+	// 清理一个流不再被需要的流的痕迹。err标明在调用时出错。
+	// 必须在流结束时调用，除非相关的传输关闭了。
 	CloseStream(stream *Stream, err error)
 
 	// Error returns a channel that is closed when some I/O error
@@ -616,14 +628,21 @@ type ClientTransport interface {
 	// this in order to take action (e.g., close the current transport
 	// and create a new one) in error case. It should not return nil
 	// once the transport is initiated.
+	//
+	// 当 I/O 错误发生时返回发生错误的这个通道。调用者应该有一个协程监控它，从而在
+	// 某些情况下采取措施（比如，关闭当前传输并创建一个新的）。传输初始化后，这个
+	// 函数不会返回nil。
 	Error() <-chan struct{}
 
 	// GoAway returns a channel that is closed when ClientTransport
 	// receives the draining signal from the server (e.g., GOAWAY frame in
 	// HTTP/2).
+	//
+	// 当ClientTransport从服务端接收到draining信号时返回关闭的通道。
 	GoAway() <-chan struct{}
 
 	// GetGoAwayReason returns the reason why GoAway frame was received.
+	// 返回接收到GoAway信号的原因
 	GetGoAwayReason() GoAwayReason
 }
 

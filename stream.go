@@ -167,6 +167,7 @@ func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 		return nil, err
 	}
 
+	// 封装RPC相关的信息
 	callHdr := &transport.CallHdr{
 		Host:   cc.authority,
 		Method: method,
@@ -174,6 +175,9 @@ func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 		// so we don't flush the header.
 		// If it's client streaming, the user may never send a request or send it any
 		// time soon, so we ask the transport to flush the header.
+		//
+		// 如果不是客户端流，这种情况下应该已经有请求发送了，因此不需要在flush请求头；
+		// 如果是客户端流，用户或许还没发送过请求，或许马上就要发送，因此让传输层flush请求头。
 		Flush:          desc.ClientStreams,
 		ContentSubtype: c.contentSubtype,
 	}
@@ -182,9 +186,13 @@ func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 	// set.  In that case, also find the compressor from the encoding package.
 	// Otherwise, use the compressor configured by the WithCompressor DialOption,
 	// if set.
+	//
+	// 如果 UseCompressor CallOption 已经被设置，根据这个来设置出口的压缩方法；此时从编码
+	// 包查找合适的压缩器。否则，如果 WithCompressor DialOption 设置了就使用它设置。
 	var cp Compressor
 	var comp encoding.Compressor
 	if ct := c.compressorType; ct != "" {
+		// 根据 UserCompressor CallOption 来设置 comp
 		callHdr.SendCompress = ct
 		if ct != encoding.Identity {
 			comp = encoding.GetCompressor(ct)
@@ -193,12 +201,15 @@ func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 			}
 		}
 	} else if cc.dopts.cp != nil {
+		// 根据 DiaOption 来设置 cp
 		callHdr.SendCompress = cc.dopts.cp.Type()
 		cp = cc.dopts.cp
 	}
+	// 设置证书
 	if c.creds != nil {
 		callHdr.Creds = c.creds
 	}
+	// 设置tracing
 	var trInfo traceInfo
 	if EnableTracing {
 		trInfo.tr = trace.New("grpc.Sent."+methodFamily(method), method)
@@ -219,6 +230,7 @@ func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 		}()
 	}
 	ctx = newContextWithRPCInfo(ctx, c.failFast)
+	// 设置统计相关
 	sh := cc.dopts.copts.StatsHandler
 	var beginTime time.Time
 	if sh != nil {
@@ -253,17 +265,22 @@ func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 		// Check to make sure the context has expired.  This will prevent us from
 		// looping forever if an error occurs for wait-for-ready RPCs where no data
 		// is sent on the wire.
+		//
+		// 确认context已过期。通过这个可以防止一些情况下的无限循环，比如当没有数据在wire中发送，
+		// wait-for-ready RPCs调用发生错误时。
 		select {
 		case <-ctx.Done():
 			return nil, toRPCErr(ctx.Err())
 		default:
 		}
 
+		// 获取客户端传输通道
 		t, done, err = cc.getTransport(ctx, c.failFast)
 		if err != nil {
 			return nil, err
 		}
 
+		// 为一个RPC调用创建一个流
 		s, err = t.NewStream(ctx, callHdr)
 		if err != nil {
 			if done != nil {
@@ -273,6 +290,7 @@ func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 			// In the event of any error from NewStream, we never attempted to write
 			// anything to the wire, so we can retry indefinitely for non-fail-fast
 			// RPCs.
+			// 如果不是failFast模式，就无限尝试
 			if !c.failFast {
 				continue
 			}
@@ -281,6 +299,7 @@ func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 		break
 	}
 
+	// 搞一个客户端流
 	cs := &clientStream{
 		opts:   opts,
 		c:      c,
@@ -303,12 +322,17 @@ func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 	}
 	cs.c.stream = cs
 	cs.attempt.cs = cs
+	// 如果传入的不是一元流描述
 	if desc != unaryStreamDesc {
 		// Listen on cc and stream contexts to cleanup when the user closes the
 		// ClientConn or cancels the stream context.  In all other cases, an error
 		// should already be injected into the recv buffer by the transport, which
 		// the client will eventually receive, and then we will cancel the stream's
 		// context in clientStream.finish.
+		//
+		// 监听客户端连接（cc）和流上下文（ctx），当用户关闭客户端连接或取消流时清理资源
+		// 在其他情况下，接收缓存中应该已经被注入了错误信息，当客户端获取这个错误信息，然后
+		// 就可以在clientStream.finish取消流上下文了
 		go func() {
 			select {
 			case <-cc.ctx.Done():
@@ -322,6 +346,7 @@ func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 }
 
 // clientStream implements a client side Stream.
+// 实现了客户端流
 type clientStream struct {
 	opts []CallOption
 	c    *callInfo
@@ -344,6 +369,7 @@ type clientStream struct {
 
 // csAttempt implements a single transport stream attempt within a
 // clientStream.
+// 封装一个客户端流的一次传输流的尝试
 type csAttempt struct {
 	cs   *clientStream
 	t    transport.ClientTransport
@@ -386,11 +412,13 @@ func (cs *clientStream) Trailer() metadata.MD {
 	return cs.attempt.trailer()
 }
 
+// 发送rpc调用
 func (cs *clientStream) SendMsg(m interface{}) (err error) {
 	// TODO(retry): buffer message for replaying if not committed.
 	return cs.attempt.sendMsg(m)
 }
 
+// 接受rpc返回信息
 func (cs *clientStream) RecvMsg(m interface{}) (err error) {
 	// TODO(retry): maybe retry on error or commit attempt on success.
 	return cs.attempt.recvMsg(m)
@@ -401,6 +429,7 @@ func (cs *clientStream) CloseSend() error {
 	return nil
 }
 
+// 结束客户端流
 func (cs *clientStream) finish(err error) {
 	if err == io.EOF {
 		// Ending a stream with EOF indicates a success.
@@ -433,6 +462,7 @@ func (a *csAttempt) trailer() metadata.MD {
 	return a.s.Trailer()
 }
 
+// 发送信息，真正干活的函数
 func (a *csAttempt) sendMsg(m interface{}) (err error) {
 	// TODO Investigate how to signal the stats handling party.
 	// generate error stats if err != nil && err != io.EOF?
@@ -441,6 +471,9 @@ func (a *csAttempt) sendMsg(m interface{}) (err error) {
 		// For non-client-streaming RPCs, we return nil instead of EOF on success
 		// because the generated code requires it.  finish is not called; RecvMsg()
 		// will call it with the stream's status independently.
+		//
+		// 对于非客户端流的RPCs调用，在成功情况下返回nil而不是EOF（因为生成的代码需要）
+		// 没有调用finish函数；RecvMsg()会独立地调用finish函数
 		if err == io.EOF && !cs.desc.ClientStreams {
 			err = nil
 		}
@@ -449,6 +482,9 @@ func (a *csAttempt) sendMsg(m interface{}) (err error) {
 			// call, as these indicate problems created by this client.  (Transport
 			// errors are converted to an io.EOF error below; the real error will be
 			// returned from RecvMsg eventually in that case, or be retried.)
+			//
+			// 为生成的err在客户端流调用finish函数，从而标明这个客户端有问题（传输层错误会在
+			// 下面转换成io.EOF错误；真正的错误会从RecvMsg返回，或者被重试。
 			cs.finish(err)
 		}
 	}()
@@ -487,6 +523,7 @@ func (a *csAttempt) sendMsg(m interface{}) (err error) {
 	return io.EOF
 }
 
+// 接收信息，真正干活的函数
 func (a *csAttempt) recvMsg(m interface{}) (err error) {
 	cs := a.cs
 	defer func() {
@@ -544,6 +581,7 @@ func (a *csAttempt) recvMsg(m interface{}) (err error) {
 
 	// Special handling for non-server-stream rpcs.
 	// This recv expects EOF or errors, so we don't collect inPayload.
+	// 非服务端流的rpcs调用，要有两次 recv 调用（需要跟进，non-server-stream 是啥？为啥需要两次recv）
 	err = recv(a.p, cs.codec, a.s, a.dc, m, *cs.c.maxReceiveMessageSize, nil, a.decomp)
 	if err == nil {
 		return toRPCErr(errors.New("grpc: client streaming protocol violation: get <nil>, want <EOF>"))

@@ -83,6 +83,13 @@ func (bp *pickerWrapper) updatePicker(p balancer.Picker) {
 // - the current picker returns other errors and failfast is false.
 // - the subConn returned by the current picker is not READY
 // When one of these situations happens, pick blocks until the picker gets updated.
+//
+// 返回RPC使用的通道
+// 可能会在以下情况下阻塞：
+// 1）没有 选择器；2） 当前选择器返回了ErrNoSubConnAvailable；
+// 3）当前选择器反悔了其他错误，并且failfast设置为false
+// 4）当前选择器返回的子连接（subConn）还未就绪
+// pick会一直阻塞，直到选择器状态更新
 func (bp *pickerWrapper) pick(ctx context.Context, failfast bool, opts balancer.PickOptions) (transport.ClientTransport, func(balancer.DoneInfo), error) {
 	var (
 		p  balancer.Picker

@@ -445,6 +445,15 @@ type parser struct {
 // No other error values or types must be returned, which also means
 // that the underlying io.Reader must not return an incompatible
 // error.
+//
+// 从流中读取完整的gRPC消息
+//
+// 返回消息以及它的其他信息（比如解码编码相关内容），调用方完全拥有此函数返回的消息内存
+//
+// 如果返回了错误，可能的值包含：
+// 1）io.EOF,当没有消息剩下时返回；2）io.ErrUnexpectedEOF，继承 transport.ConnectionError
+// 3）io.ErrUnexpectedEOF，继承 transport.StreamError
+// 禁止返回其他类型的错误，也意味着底层的io.Reader不能返回任何不兼容的错误
 func (p *parser) recvMsg(maxReceiveMessageSize int) (pf payloadFormat, msg []byte, err error) {
 	if _, err := p.r.Read(p.header[:]); err != nil {
 		return 0, nil, err
@@ -477,6 +486,9 @@ func (p *parser) recvMsg(maxReceiveMessageSize int) (pf payloadFormat, msg []byt
 // encode serializes msg and returns a buffer of message header and a buffer of msg.
 // If msg is nil, it generates the message header and an empty msg buffer.
 // TODO(ddyihai): eliminate extra Compressor parameter.
+//
+// 序列化信息，返回一个信息头的缓存和信息的缓存
+// 如果信息是空，会生成信息头和空的信息缓存
 func encode(c baseCodec, msg interface{}, cp Compressor, outPayload *stats.OutPayload, compressor encoding.Compressor) ([]byte, []byte, error) {
 	var (
 		b    []byte
@@ -554,6 +566,8 @@ func checkRecvPayload(pf payloadFormat, recvCompress string, haveCompressor bool
 // For the two compressor parameters, both should not be set, but if they are,
 // dc takes precedence over compressor.
 // TODO(dfawley): wrap the old compressor/decompressor using the new API?
+//
+// 两个压缩相关的参数，都不应该设置，如果设置了，dc优先级比compressor高
 func recv(p *parser, c baseCodec, s *transport.Stream, dc Decompressor, m interface{}, maxReceiveMessageSize int, inPayload *stats.InPayload, compressor encoding.Compressor) error {
 	pf, d, err := p.recvMsg(maxReceiveMessageSize)
 	if err != nil {
@@ -610,6 +624,7 @@ type rpcInfo struct {
 
 type rpcInfoContextKey struct{}
 
+// 搞一个新的Context，带传入值的。
 func newContextWithRPCInfo(ctx context.Context, failfast bool) context.Context {
 	return context.WithValue(ctx, rpcInfoContextKey{}, &rpcInfo{failfast: failfast})
 }

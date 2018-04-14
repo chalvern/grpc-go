@@ -21,6 +21,9 @@
 // Package stats is for collecting and reporting various network and RPC stats.
 // This package is for monitoring purpose only. All fields are read-only.
 // All APIs are experimental.
+//
+// 这个stats包用于手机和报告各种网络和RPC统计。
+// 只用于监控，所有字段只读
 package stats // import "github.com/chalvern/grpc-go/stats"
 
 import (
@@ -111,6 +114,7 @@ func (s *InTrailer) IsClient() bool { return s.Client }
 func (s *InTrailer) isRPCStats() {}
 
 // OutPayload contains the information for an outgoing payload.
+// 包含出口的内容
 type OutPayload struct {
 	// Client is true if this OutPayload is from client side.
 	Client bool
