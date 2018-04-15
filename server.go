@@ -34,9 +34,6 @@ import (
 
 	"io/ioutil"
 
-	"golang.org/x/net/context"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/trace"
 	"github.com/chalvern/grpc-go/codes"
 	"github.com/chalvern/grpc-go/credentials"
 	"github.com/chalvern/grpc-go/encoding"
@@ -49,6 +46,9 @@ import (
 	"github.com/chalvern/grpc-go/status"
 	"github.com/chalvern/grpc-go/tap"
 	"github.com/chalvern/grpc-go/transport"
+	"golang.org/x/net/context"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/trace"
 )
 
 const (
@@ -59,16 +59,21 @@ const (
 type methodHandler func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor UnaryServerInterceptor) (interface{}, error)
 
 // MethodDesc represents an RPC service's method specification.
+// 表示一个RPC服务方法的定义
 type MethodDesc struct {
 	MethodName string
 	Handler    methodHandler
 }
 
 // ServiceDesc represents an RPC service's specification.
+// 记录一个RPC服务的具体定义
 type ServiceDesc struct {
+	// 服务名，比如 “helloworld.Greeter”
 	ServiceName string
 	// The pointer to the service interface. Used to check whether the user
 	// provided implementation satisfies the interface requirements.
+	//
+	// 服务接口的指针。用来检查开发者提供的实现是否满足接口所需
 	HandlerType interface{}
 	Methods     []MethodDesc
 	Streams     []StreamDesc
@@ -77,6 +82,7 @@ type ServiceDesc struct {
 
 // service consists of the information of the server serving this service and
 // the methods in this service.
+// 包含了服务端的信息：提供的服务及其方法
 type service struct {
 	server interface{} // the server for service methods
 	md     map[string]*MethodDesc
@@ -85,6 +91,7 @@ type service struct {
 }
 
 // Server is a gRPC server to serve RPC requests.
+// 服务RPC请求的gRPC服务端
 type Server struct {
 	opts options
 
@@ -325,11 +332,14 @@ func ConnectionTimeout(d time.Duration) ServerOption {
 
 // NewServer creates a gRPC server which has no service registered and has not
 // started to accept requests yet.
+//
+// 创建一个gRPC的服务端，此时还没有服务注册，也没开始接收请求
 func NewServer(opt ...ServerOption) *Server {
 	opts := defaultServerOptions
 	for _, o := range opt {
 		o(&opts)
 	}
+	// 初始化一个服务端
 	s := &Server{
 		lis:   make(map[net.Listener]bool),
 		opts:  opts,
@@ -339,10 +349,12 @@ func NewServer(opt ...ServerOption) *Server {
 		done:  make(chan struct{}),
 	}
 	s.cv = sync.NewCond(&s.mu)
+	// 如果需要跟踪
 	if EnableTracing {
 		_, file, line, _ := runtime.Caller(1)
 		s.events = trace.NewEventLog("grpc.Server", fmt.Sprintf("%s:%d", file, line))
 	}
+	// 只是简单地初始化，并没有添加什么魔法。。。
 	return s
 }
 
@@ -365,9 +377,12 @@ func (s *Server) errorf(format string, a ...interface{}) {
 // RegisterService registers a service and its implementation to the gRPC
 // server. It is called from the IDL generated code. This must be called before
 // invoking Serve.
+//
+// 注册一个服务及其实现到gRPC的服务端。这个方法会在IDL生成的代码中调用，必须在出发服务前调用
 func (s *Server) RegisterService(sd *ServiceDesc, ss interface{}) {
 	ht := reflect.TypeOf(sd.HandlerType).Elem()
 	st := reflect.TypeOf(ss)
+	// 检查传入的ss是否实现了Handler的方法，用到golang的底层技术
 	if !st.Implements(ht) {
 		grpclog.Fatalf("grpc: Server.RegisterService found the handler of type %v that does not satisfy %v", st, ht)
 	}
