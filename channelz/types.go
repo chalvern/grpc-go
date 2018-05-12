@@ -22,8 +22,8 @@ import (
 	"net"
 	"time"
 
-	"google.golang.org/grpc/connectivity"
-	"google.golang.org/grpc/grpclog"
+	"github.com/chalvern/grpc-go/connectivity"
+	"github.com/chalvern/grpc-go/grpclog"
 )
 
 // entry represents a node in the channelz database.

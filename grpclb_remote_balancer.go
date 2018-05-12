@@ -25,13 +25,13 @@ import (
 	"time"
 
 	"github.com/chalvern/grpc-go/balancer"
+	"github.com/chalvern/grpc-go/channelz"
 	"github.com/chalvern/grpc-go/connectivity"
 	lbpb "github.com/chalvern/grpc-go/grpclb/grpc_lb_v1/messages"
 	"github.com/chalvern/grpc-go/grpclog"
 	"github.com/chalvern/grpc-go/metadata"
 	"github.com/chalvern/grpc-go/resolver"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc/channelz"
 )
 
 // processServerList updates balaner's internal state, create/remove SubConns

@@ -366,14 +366,11 @@ func NewServer(opt ...ServerOption) *Server {
 		_, file, line, _ := runtime.Caller(1)
 		s.events = trace.NewEventLog("grpc.Server", fmt.Sprintf("%s:%d", file, line))
 	}
-<<<<<<< HEAD
 	// 只是简单地初始化，并没有添加什么魔法。。。
-=======
 
 	if channelz.IsOn() {
 		s.channelzID = channelz.RegisterServer(s, "")
 	}
->>>>>>> 9a54b9abadc29235e480ec8837c5d49747611694
 	return s
 }
 

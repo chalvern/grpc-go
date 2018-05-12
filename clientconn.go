@@ -30,6 +30,7 @@ import (
 
 	"github.com/chalvern/grpc-go/balancer"
 	_ "github.com/chalvern/grpc-go/balancer/roundrobin" // To register roundrobin.
+	"github.com/chalvern/grpc-go/channelz"
 	"github.com/chalvern/grpc-go/codes"
 	"github.com/chalvern/grpc-go/connectivity"
 	"github.com/chalvern/grpc-go/credentials"
@@ -43,7 +44,6 @@ import (
 	"github.com/chalvern/grpc-go/transport"
 	"golang.org/x/net/context"
 	"golang.org/x/net/trace"
-	"google.golang.org/chalvern/channelz"
 )
 
 const (
