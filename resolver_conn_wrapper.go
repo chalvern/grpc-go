@@ -97,7 +97,7 @@ func newCCResolverWrapper(cc *ClientConn) (*ccResolverWrapper, error) {
 
 	var err error
 	// 根据resolverBuilder中的Build方法来构建一个解析器
-	ccr.resolver, err = rb.Build(cc.parsedTarget, ccr, resolver.BuildOption{})
+	ccr.resolver, err = rb.Build(cc.parsedTarget, ccr, resolver.BuildOption{DisableServiceConfig: cc.dopts.disableServiceConfig})
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (ccr *ccResolverWrapper) start() {
 	go ccr.watcher()
 }
 
-// watcher processes address updates and service config updates sequencially.
+// watcher processes address updates and service config updates sequentially.
 // Otherwise, we need to resolve possible races between address and service
 // config (e.g. they specify different balancer types).
 //

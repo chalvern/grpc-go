@@ -1,4 +1,4 @@
-all: test testrace
+all: vet test testrace
 
 deps:
 	go get -d -v github.com/chalvern/grpc-go/...
@@ -22,6 +22,9 @@ proto:
 	fi
 	go generate github.com/chalvern/grpc-go/...
 
+vet:
+	./vet.sh
+
 test: testdeps
 	go test -cpu 1,4 -timeout 5m github.com/chalvern/grpc-go/...
 
@@ -39,7 +42,7 @@ clean:
 	updatetestdeps \
 	build \
 	proto \
+	vet \
 	test \
 	testrace \
-	clean \
-	coverage
+	clean
