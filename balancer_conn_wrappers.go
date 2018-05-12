@@ -120,7 +120,7 @@ func newCCBalancerWrapper(cc *ClientConn, b balancer.Builder, bopts balancer.Bui
 	return ccb
 }
 
-// watcher balancer functions sequencially, so the balancer can be implemeneted
+// watcher balancer functions sequentially, so the balancer can be implemented
 // lock-free.
 //
 // 顺序地监控均衡器方法，从而使得均衡器可以不用加锁就可能实现。

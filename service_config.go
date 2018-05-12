@@ -32,7 +32,8 @@ const maxInt = int(^uint(0) >> 1)
 
 // MethodConfig defines the configuration recommended by the service providers for a
 // particular method.
-// DEPRECATED: Users should not use this struct. Service config should be received
+//
+// Deprecated: Users should not use this struct. Service config should be received
 // through name resolver, as specified here
 // https://github.com/grpc/grpc/blob/master/doc/service_config.md
 //
@@ -76,7 +77,8 @@ type MethodConfig struct {
 
 // ServiceConfig is provided by the service provider and contains parameters for how
 // clients that connect to the service should behave.
-// DEPRECATED: Users should not use this struct. Service config should be received
+//
+// Deprecated: Users should not use this struct. Service config should be received
 // through name resolver, as specified here
 // https://github.com/grpc/grpc/blob/master/doc/service_config.md
 //
@@ -97,6 +99,8 @@ type ServiceConfig struct {
 	// 如果恰好有一个方法（比如 /service/method）精确匹配，就使用相关的MethodConfig。假如没有，在存在默认配置的情况下会匹配服务默认的配置（/service/）。
 	// 否则，就没有MethodConfig使用了。
 	Methods map[string]MethodConfig
+
+	stickinessMetadataKey *string
 }
 
 func parseDuration(s *string) (*time.Duration, error) {
@@ -171,8 +175,9 @@ type jsonMC struct {
 
 // TODO(lyuxuan): delete this struct after cleaning up old service config implementation.
 type jsonSC struct {
-	LoadBalancingPolicy *string
-	MethodConfig        *[]jsonMC
+	LoadBalancingPolicy   *string
+	StickinessMetadataKey *string
+	MethodConfig          *[]jsonMC
 }
 
 // 解析json格式的服务端配置
@@ -186,6 +191,8 @@ func parseServiceConfig(js string) (ServiceConfig, error) {
 	sc := ServiceConfig{
 		LB:      rsc.LoadBalancingPolicy,
 		Methods: make(map[string]MethodConfig),
+
+		stickinessMetadataKey: rsc.StickinessMetadataKey,
 	}
 	if rsc.MethodConfig == nil {
 		return sc, nil

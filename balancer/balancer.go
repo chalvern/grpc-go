@@ -36,9 +36,12 @@ var (
 	m = make(map[string]Builder)
 )
 
-// Register registers the balancer builder to the balancer map.
-// b.Name (lowercased) will be used as the name registered with
-// this builder.
+// Register registers the balancer builder to the balancer map. b.Name
+// (lowercased) will be used as the name registered with this builder.
+//
+// NOTE: this function must only be called during initialization time (i.e. in
+// an init() function), and is not thread-safe. If multiple Balancers are
+// registered with the same name, the one registered last will take effect.
 func Register(b Builder) {
 	m[strings.ToLower(b.Name())] = b
 }
@@ -168,6 +171,8 @@ type BuildOptions struct {
 	// Dialer是Balancer连接到远程负载均衡服务器时使用的定制拨号器（dialer）。在不需要连接
 	// 到远端均衡器的情况下，均衡器实现可以忽略这个字段。
 	Dialer func(context.Context, string) (net.Conn, error)
+	// ChannelzParentID is the entity parent's channelz unique identification number.
+	ChannelzParentID int64
 }
 
 // Builder creates a balancer.
@@ -202,7 +207,7 @@ var (
 )
 
 // Picker is used by gRPC to pick a SubConn to send an RPC.
-// Balancer is expected to generate a new picker from its snapshot everytime its
+// Balancer is expected to generate a new picker from its snapshot every time its
 // internal state has changed.
 //
 // The pickers used by gRPC can be updated by ClientConn.UpdateBalancerState().
